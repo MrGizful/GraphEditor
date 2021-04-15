@@ -16,6 +16,11 @@ void EditZone::mousePressEvent(QMouseEvent *event)
         if(isCorrectPos())
             _graph.addNode(_mousePos);
     }
+    if(event->button() == Qt::RightButton)
+    {
+        if(isNodePos())
+            _graph.removeNode(getNodeIndex());
+    }
     update();
 }
 
@@ -50,4 +55,34 @@ bool EditZone::isCorrectPos()
         return false;
     }
     return true;
+}
+
+bool EditZone::isNodePos()
+{
+    for(int index = 0; index < _graph.nodeCount(); index++)
+    {
+        QPoint nodePos = _graph.getPos(index);
+
+        if((_mousePos.x() >= nodePos.x() - _radius) && (_mousePos.x() <= nodePos.x() + _radius) &&
+           (_mousePos.y() >= nodePos.y() - _radius) && (_mousePos.y() <= nodePos.y() + _radius))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+int EditZone::getNodeIndex()
+{
+    for(int index = 0; index < _graph.nodeCount(); index++)
+    {
+        QPoint nodePos = _graph.getPos(index);
+
+        if((_mousePos.x() >= nodePos.x() - _radius) && (_mousePos.x() <= nodePos.x() + _radius) &&
+           (_mousePos.y() >= nodePos.y() - _radius) && (_mousePos.y() <= nodePos.y() + _radius))
+        {
+            return index;
+        }
+    }
+    return -1;
 }

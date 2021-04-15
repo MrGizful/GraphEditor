@@ -14,6 +14,8 @@ private:
     Graph _graph;
 
     bool isCorrectPos();
+    bool isNodePos();
+    int getNodeIndex();
 
 public:
     EditZone(QWidget *parent = nullptr);
