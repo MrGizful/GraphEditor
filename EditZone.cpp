@@ -1,26 +1,88 @@
 #include "EditZone.h"
 
 EditZone::EditZone(QWidget *parent)
-    : QWidget(parent), _scale(1), _radius(20)
+    : QWidget(parent), _scale(1), _radius(20), _selectedNode(-1)
 {
     _mousePos.setX(0);
     _mousePos.setY(0);
 }
 
-void EditZone::mousePressEvent(QMouseEvent *event)
+EditZone::Action EditZone::getAction(QMouseEvent *event)
 {
     _mousePos = event->pos();
 
     if(event->button() == Qt::LeftButton)
     {
-        if(isCorrectPos())
-            _graph.addNode(_mousePos);
+        if(_selectedNode == -1)
+        {
+            if(isNodePos())
+                return selectFirstNode;
+            if(isCorrectPos())
+                return createNewNode;
+            return nothing;
+        }
+        else
+        {
+            if(isNodePos())
+            {
+                if(getNodeIndex() == _selectedNode)
+                    return deselectNode;
+                return selectSecondNode;
+            }
+            return nothing;
+        }
     }
     if(event->button() == Qt::RightButton)
     {
-        if(isNodePos())
-            _graph.removeNode(getNodeIndex());
+        if(_selectedNode == -1)
+        {
+            if(isNodePos())
+                return deleteNode;
+            return nothing;
+        }
+        else
+        {
+            return deselectNode;
+        }
     }
+    return nothing;
+}
+
+void EditZone::mousePressEvent(QMouseEvent *event)
+{
+    switch (getAction(event))
+    {
+    case nothing:
+        break;
+    case createNewNode:
+    {
+        _graph.addNode(_mousePos);
+        break;
+    }
+    case deleteNode:
+    {
+        _graph.removeNode(getNodeIndex());
+        break;
+    }
+    case selectFirstNode:
+    {
+        _selectedNode = getNodeIndex();
+        _graph.setState(Graph::selected, _selectedNode);
+        break;
+    }
+    case selectSecondNode:
+    {
+        //ToDo
+        break;
+    }
+    case deselectNode:
+    {
+        _graph.setState(Graph::stand, _selectedNode);
+        _selectedNode = -1;
+        break;
+    }
+    }
+
     update();
 }
 
@@ -30,9 +92,30 @@ void EditZone::paintEvent(QPaintEvent*)
     {
         QPoint nodePos = _graph.getPos(index);
 
+        QPen pen;
+        QBrush brush;
+        brush.setStyle(Qt::SolidPattern);
+        switch (_graph.getState(index))
+        {
+        case Graph::stand:
+        {
+            pen.setColor(Qt::gray);
+            brush.setColor(Qt::gray);
+            break;
+        }
+        case Graph::selected:
+        {
+            QColor color;
+            color.setRgb(48, 182, 235);
+            pen.setColor(color);
+            brush.setColor(color);
+            break;
+        }
+        }
+
         QPainter painter(this);
-        painter.setPen(Qt::gray);
-        painter.setBrush(QBrush(Qt::gray));
+        painter.setPen(pen);
+        painter.setBrush(brush);
         painter.drawEllipse(nodePos.x() - _radius, nodePos.y() - _radius, 2 * _radius, 2 * _radius);
 
         painter.setFont(QFont("Times", _radius, QFont::Bold));

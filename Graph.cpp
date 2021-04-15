@@ -2,12 +2,14 @@
 
 Graph::Graph()
 {
+
 }
 
-void Graph::addNode(QPoint pos)
+void Graph::addNode(QPoint pos, NodeState state)
 {
     NodeInfo newNode;
     newNode.position = pos;
+    newNode.state = state;
     _nodeList.append(newNode);
 }
 
@@ -63,7 +65,7 @@ void Graph::setPos(QPoint pos, int nodeNum)
     QList<NodeInfo>::iterator iter = _nodeList.begin();
     for(int i = 0; i < nodeNum; i++)
         iter++;
-    (*iter).position = pos;
+    iter->position = pos;
 }
 
 QPoint Graph::getPos(int nodeNum)
@@ -74,4 +76,17 @@ QPoint Graph::getPos(int nodeNum)
 int Graph::nodeCount()
 {
     return _nodeList.count();
+}
+
+void Graph::setState(NodeState state, int nodeNum)
+{
+    QList<NodeInfo>::iterator iter = _nodeList.begin();
+    for(int i = 0; i < nodeNum; i++)
+        iter++;
+    iter->state = state;
+}
+
+Graph::NodeState Graph::getState(int nodeNum)
+{
+    return _nodeList.at(nodeNum).state;
 }
