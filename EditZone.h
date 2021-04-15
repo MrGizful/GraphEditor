@@ -1,5 +1,6 @@
 #pragma once
 #include <QtWidgets>
+#include "Graph.h"
 
 class EditZone : public QWidget
 {
@@ -10,7 +11,7 @@ private:
     float _scale;
     int _radius;
 
-    QList<QPoint> _nodeList;
+    Graph _graph;
 
     bool isCorrectPos();
 
