@@ -60,6 +60,20 @@ void Graph::addEdge(int nodeOut, int nodeIn, float weight)
     node->adjacencyList.append(newEdge);
 }
 
+QList<Graph::AdjacencyListElement> Graph::getEdges(int nodeNum)
+{
+    return _nodeList.at(nodeNum).adjacencyList;
+}
+
+bool Graph::hasEdge(int nodeOut, int nodeIn)
+{
+    QList<AdjacencyListElement> edgesList = _nodeList.at(nodeOut).adjacencyList;
+    for(int i = 0; i < edgesList.count(); i++)
+        if(edgesList.at(i).nodeNum == nodeIn)
+            return true;
+    return false;
+}
+
 void Graph::setPos(QPoint pos, int nodeNum)
 {
     QList<NodeInfo>::iterator iter = _nodeList.begin();
@@ -76,6 +90,11 @@ QPoint Graph::getPos(int nodeNum)
 int Graph::nodeCount()
 {
     return _nodeList.count();
+}
+
+int Graph::edgeCount(int nodeNum)
+{
+    return _nodeList.at(nodeNum).adjacencyList.size();
 }
 
 void Graph::setState(NodeState state, int nodeNum)

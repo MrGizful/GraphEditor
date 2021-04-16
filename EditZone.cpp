@@ -72,7 +72,9 @@ void EditZone::mousePressEvent(QMouseEvent *event)
     }
     case selectSecondNode:
     {
-        //ToDo
+        _graph.addEdge(_selectedNode, getNodeIndex(), 1);
+        _graph.setState(Graph::stand, _selectedNode);
+        _selectedNode = -1;
         break;
     }
     case deselectNode:
@@ -88,6 +90,73 @@ void EditZone::mousePressEvent(QMouseEvent *event)
 
 void EditZone::paintEvent(QPaintEvent*)
 {
+    for(int nodeOut = 0; nodeOut < _graph.nodeCount(); nodeOut++)
+    {
+        QList<Graph::AdjacencyListElement> edges = _graph.getEdges(nodeOut);
+        for(int index = 0; index < edges.count(); index++)
+        {
+            int nodeIn = edges.at(index).nodeNum;
+
+            QPainter painter(this);
+            QPen pen;
+            pen.setColor(Qt::black);
+            pen.setWidth(3);
+            painter.setPen(pen);
+
+            QBrush brush;
+            brush.setColor(Qt::black);
+            brush.setStyle(Qt::SolidPattern);
+            painter.setBrush(brush);
+
+            QPoint outPoint = _graph.getPos(nodeOut);
+            QPoint inPoint = _graph.getPos(nodeIn);
+            if(_graph.hasEdge(nodeIn, nodeOut))
+            {
+                if(nodeOut > nodeIn)
+                {
+                    if(abs(outPoint.x() - inPoint.x()) < abs(outPoint.y() - inPoint.y()))
+                    {
+                        outPoint.setX(outPoint.x() - _radius/3);
+                        inPoint.setX(inPoint.x() - _radius/3);
+                    }
+                    else
+                    {
+                        outPoint.setY(outPoint.y() - _radius/3);
+                        inPoint.setY(inPoint.y() - _radius/3);
+                    }
+                }
+                else
+                {
+                    if(abs(outPoint.x() - inPoint.x()) < abs(outPoint.y() - inPoint.y()))
+                    {
+                        outPoint.setX(outPoint.x() + _radius/3);
+                        inPoint.setX(inPoint.x() + _radius/3);
+                    }
+                    else
+                    {
+                        outPoint.setY(outPoint.y() + _radius/3);
+                        inPoint.setY(inPoint.y() + _radius/3);
+                    }
+                }
+            }
+
+            painter.drawLine(outPoint, inPoint);
+
+            QPoint arrowPoint = getArrowPoint(inPoint, outPoint, _graph.getPos(nodeIn));
+            QPolygon arrow;
+            arrow.append(QPoint(0, -1 * _radius/3));
+            arrow.append(QPoint(-1 * _radius, 0));
+            arrow.append(QPoint(0,  _radius/3));
+
+            painter.save();
+            painter.translate(arrowPoint);
+            float angle = atan2f(outPoint.y() - inPoint.y(), outPoint.x() - inPoint.x());
+            painter.rotate(1 * 180/3.14 * angle);
+            painter.drawConvexPolygon(arrow);
+            painter.restore();
+        }
+    }
+
     for(int index = 0; index < _graph.nodeCount(); index++)
     {
         QPoint nodePos = _graph.getPos(index);
@@ -123,6 +192,29 @@ void EditZone::paintEvent(QPaintEvent*)
         QRect fontZone(nodePos.x() - _radius, nodePos.y() - _radius/2, 2 * _radius, _radius);
         painter.drawText(fontZone, Qt::AlignCenter | Qt::TextDontClip, QString::number(index + 1));
     }
+}
+
+//Line - y = kx + b
+QPoint EditZone::getArrowPoint(QPoint inPoint, QPoint outPoint, QPoint centerPoint)
+{
+    inPoint -= centerPoint;
+    outPoint -= centerPoint;
+    float k = ((float)inPoint.y() - outPoint.y())/(inPoint.x() - outPoint.x());
+    float b = (float)inPoint.y() - k * inPoint.x();
+
+    float x0 = (-1 * k * b) / (k * k + 1);
+    float y0 = b / (k * k + 1);
+    float d = sqrtf(4 * _radius * _radius - b * b / (k * k + 1));
+    float mult = sqrtf(d * d / (k * k + 1));
+
+    float ax = x0 - mult;
+    float ay = y0 - k * mult;
+    float bx = x0 + mult;
+    float by = y0 + k * mult;
+
+    if((outPoint - QPoint(ax, ay)).manhattanLength() < (outPoint - QPoint(bx, by)).manhattanLength())
+        return QPoint(ax, ay) + centerPoint;
+    return QPoint(bx, by) + centerPoint;
 }
 
 bool EditZone::isCorrectPos()

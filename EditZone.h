@@ -25,6 +25,7 @@ private:
     Graph _graph;
 
     Action getAction(QMouseEvent* event);
+    QPoint getArrowPoint(QPoint inPoint, QPoint outPoint, QPoint centerPoint);
     bool isCorrectPos();
     bool isNodePos();
     int getNodeIndex();

@@ -11,7 +11,6 @@ public:
         selected
     };
 
-private:
     struct AdjacencyListElement
     {
         int nodeNum;
@@ -25,6 +24,7 @@ private:
         QList<AdjacencyListElement> adjacencyList;
     };
 
+private:
     QList<NodeInfo> _nodeList;
 
 public:
@@ -32,10 +32,17 @@ public:
 
     void addNode(QPoint pos, NodeState state = stand);
     void removeNode(int nodeNum);
+
     void addEdge(int nodeOut, int nodeIn, float weight);
+    QList<AdjacencyListElement> getEdges(int nodeNum);
+    bool hasEdge(int nodeOut, int nodeIn);
+
     void setPos(QPoint pos, int nodeNum);
     QPoint getPos(int nodeNum);
+
     void setState(NodeState state, int nodeNum);
     NodeState getState(int nodeNum);
+
     int nodeCount();
+    int edgeCount(int nodeNum);
 };
