@@ -72,7 +72,13 @@ void EditZone::mousePressEvent(QMouseEvent *event)
     }
     case selectSecondNode:
     {
-        _graph.addEdge(_selectedNode, getNodeIndex(), 1);
+        _addEdgeDialog = new AddEdgeDialog();
+        if(_addEdgeDialog->exec() == QDialog::Accepted)
+            _graph.addEdge(_selectedNode, getNodeIndex(), _addEdgeDialog->getWeight());
+        if(_addEdgeDialog->isEdgeDeleted())
+            _graph.removeEdge(_selectedNode, getNodeIndex());
+        delete _addEdgeDialog;
+
         _graph.setState(Graph::stand, _selectedNode);
         _selectedNode = -1;
         break;
@@ -96,101 +102,158 @@ void EditZone::paintEvent(QPaintEvent*)
         for(int index = 0; index < edges.count(); index++)
         {
             int nodeIn = edges.at(index).nodeNum;
-
-            QPainter painter(this);
-            QPen pen;
-            pen.setColor(Qt::black);
-            pen.setWidth(3);
-            painter.setPen(pen);
-
-            QBrush brush;
-            brush.setColor(Qt::black);
-            brush.setStyle(Qt::SolidPattern);
-            painter.setBrush(brush);
-
-            QPoint outPoint = _graph.getPos(nodeOut);
-            QPoint inPoint = _graph.getPos(nodeIn);
-            if(_graph.hasEdge(nodeIn, nodeOut))
-            {
-                if(nodeOut > nodeIn)
-                {
-                    if(abs(outPoint.x() - inPoint.x()) < abs(outPoint.y() - inPoint.y()))
-                    {
-                        outPoint.setX(outPoint.x() - _radius/3);
-                        inPoint.setX(inPoint.x() - _radius/3);
-                    }
-                    else
-                    {
-                        outPoint.setY(outPoint.y() - _radius/3);
-                        inPoint.setY(inPoint.y() - _radius/3);
-                    }
-                }
-                else
-                {
-                    if(abs(outPoint.x() - inPoint.x()) < abs(outPoint.y() - inPoint.y()))
-                    {
-                        outPoint.setX(outPoint.x() + _radius/3);
-                        inPoint.setX(inPoint.x() + _radius/3);
-                    }
-                    else
-                    {
-                        outPoint.setY(outPoint.y() + _radius/3);
-                        inPoint.setY(inPoint.y() + _radius/3);
-                    }
-                }
-            }
-
-            painter.drawLine(outPoint, inPoint);
-
-            QPoint arrowPoint = getArrowPoint(inPoint, outPoint, _graph.getPos(nodeIn));
-            QPolygon arrow;
-            arrow.append(QPoint(0, -1 * _radius/3));
-            arrow.append(QPoint(-1 * _radius, 0));
-            arrow.append(QPoint(0,  _radius/3));
-
-            painter.save();
-            painter.translate(arrowPoint);
-            float angle = atan2f(outPoint.y() - inPoint.y(), outPoint.x() - inPoint.x());
-            painter.rotate(1 * 180/3.14 * angle);
-            painter.drawConvexPolygon(arrow);
-            painter.restore();
+            drawEdge(nodeIn, nodeOut);
+        }
+        for(int index = 0; index < edges.count(); index++)
+        {
+            int nodeIn = edges.at(index).nodeNum;
+            drawWeight(nodeIn, nodeOut);
         }
     }
 
     for(int index = 0; index < _graph.nodeCount(); index++)
+        drawNode(index);
+}
+
+void EditZone::drawEdge(int nodeIn, int nodeOut)
+{
+    QPainter painter(this);
+    QPen pen;
+    pen.setColor(Qt::black);
+    pen.setWidth(3);
+    painter.setPen(pen);
+
+    QBrush brush;
+    brush.setColor(Qt::black);
+    brush.setStyle(Qt::SolidPattern);
+    painter.setBrush(brush);
+
+    QPoint outPoint = _graph.getPos(nodeOut);
+    QPoint inPoint = _graph.getPos(nodeIn);
+
+    if(_graph.hasEdge(nodeIn, nodeOut))
+        transformEdgePoints(inPoint, outPoint);
+
+    painter.drawLine(outPoint, inPoint);
+    drawArrow(inPoint, outPoint, _graph.getPos(nodeIn), painter);
+}
+
+void EditZone::drawArrow(QPoint inPoint, QPoint outPoint, QPoint centerPoint, QPainter& painter)
+{
+    QPoint arrowPoint = getArrowPoint(inPoint, outPoint, centerPoint);
+    QPolygon arrow;
+    arrow.append(QPoint(0, -1 * _radius/3));
+    arrow.append(QPoint(-1 * _radius, 0));
+    arrow.append(QPoint(0,  _radius/3));
+
+    painter.save();
+    painter.translate(arrowPoint);
+    float angle = atan2f(outPoint.y() - inPoint.y(), outPoint.x() - inPoint.x());
+    painter.rotate(180/3.14 * angle);
+    painter.drawConvexPolygon(arrow);
+    painter.restore();
+}
+
+void EditZone::drawWeight(int nodeIn, int nodeOut)
+{
+    QPoint outPoint = _graph.getPos(nodeOut);
+    QPoint inPoint = _graph.getPos(nodeIn);
+
+    if(_graph.hasEdge(nodeIn, nodeOut))
+        transformEdgePoints(inPoint, outPoint);
+
+    QString weight = QString::number(_graph.getWeight(nodeOut, nodeIn));
+    int length = weight.length();
+
+    QPoint textPoint = inPoint - outPoint;
+    textPoint /= 2;
+
+    if(nodeOut > nodeIn)
+        textPoint += outPoint - QPoint(_radius * length / 4, _radius / 1.2);
+    else
+        textPoint += outPoint - QPoint(_radius * length / 4, -1 * _radius / 4);
+
+    QPainter painter(this);
+    painter.setPen(QWidget::palette().color(QWidget::backgroundRole()));
+    painter.setBrush(QBrush(QWidget::palette().color(QWidget::backgroundRole())));
+
+    QRect fontZone(textPoint, QSize(_radius * length / 2, _radius / 1.2));
+    painter.drawRect(fontZone);
+
+    QColor color;
+    color.setRgb(142, 69, 133);
+    painter.setPen(color);
+
+    painter.setFont(QFont("Times", _radius / 1.2, QFont::Bold));
+    painter.drawText(fontZone, Qt::AlignCenter | Qt::TextDontClip, weight);
+}
+
+void EditZone::drawNode(int nodeNum)
+{
+    QPoint nodePos = _graph.getPos(nodeNum);
+
+    QPen pen;
+    QBrush brush;
+    brush.setStyle(Qt::SolidPattern);
+    switch (_graph.getState(nodeNum))
     {
-        QPoint nodePos = _graph.getPos(index);
+    case Graph::stand:
+    {
+        pen.setColor(Qt::gray);
+        brush.setColor(Qt::gray);
+        break;
+    }
+    case Graph::selected:
+    {
+        QColor color;
+        color.setRgb(48, 182, 235);
+        pen.setColor(color);
+        brush.setColor(color);
+        break;
+    }
+    }
 
-        QPen pen;
-        QBrush brush;
-        brush.setStyle(Qt::SolidPattern);
-        switch (_graph.getState(index))
-        {
-        case Graph::stand:
-        {
-            pen.setColor(Qt::gray);
-            brush.setColor(Qt::gray);
-            break;
-        }
-        case Graph::selected:
-        {
-            QColor color;
-            color.setRgb(48, 182, 235);
-            pen.setColor(color);
-            brush.setColor(color);
-            break;
-        }
-        }
+    QPainter painter(this);
+    painter.setPen(pen);
+    painter.setBrush(brush);
+    painter.drawEllipse(nodePos.x() - _radius, nodePos.y() - _radius, 2 * _radius, 2 * _radius);
 
-        QPainter painter(this);
-        painter.setPen(pen);
-        painter.setBrush(brush);
-        painter.drawEllipse(nodePos.x() - _radius, nodePos.y() - _radius, 2 * _radius, 2 * _radius);
+    painter.setFont(QFont("Times", _radius, QFont::Bold));
+    painter.setPen(Qt::black);
+    QRect fontZone(nodePos.x() - _radius, nodePos.y() - _radius/2, 2 * _radius, _radius);
+    painter.drawText(fontZone, Qt::AlignCenter | Qt::TextDontClip, QString::number(nodeNum + 1));
+}
 
-        painter.setFont(QFont("Times", _radius, QFont::Bold));
-        painter.setPen(Qt::black);
-        QRect fontZone(nodePos.x() - _radius, nodePos.y() - _radius/2, 2 * _radius, _radius);
-        painter.drawText(fontZone, Qt::AlignCenter | Qt::TextDontClip, QString::number(index + 1));
+void EditZone::transformEdgePoints(QPoint &inPoint, QPoint &outPoint)
+{
+    int nodeOut = getNodeIndex(&outPoint);
+    int nodeIn = getNodeIndex(&inPoint);
+
+    if(nodeOut > nodeIn)
+    {
+        if(abs(outPoint.x() - inPoint.x()) < abs(outPoint.y() - inPoint.y()))
+        {
+            outPoint.setX(outPoint.x() - _radius/3);
+            inPoint.setX(inPoint.x() - _radius/3);
+        }
+        else
+        {
+            outPoint.setY(outPoint.y() - _radius/3);
+            inPoint.setY(inPoint.y() - _radius/3);
+        }
+    }
+    else
+    {
+        if(abs(outPoint.x() - inPoint.x()) < abs(outPoint.y() - inPoint.y()))
+        {
+            outPoint.setX(outPoint.x() + _radius/3);
+            inPoint.setX(inPoint.x() + _radius/3);
+        }
+        else
+        {
+            outPoint.setY(outPoint.y() + _radius/3);
+            inPoint.setY(inPoint.y() + _radius/3);
+        }
     }
 }
 
@@ -223,9 +286,9 @@ bool EditZone::isCorrectPos()
     {
         QPoint nodePos = _graph.getPos(index);
 
-        if((_mousePos.x() < (nodePos.x() - 3 * _radius)) || (_mousePos.x() > (nodePos.x() + 3 * _radius)))
+        if((_mousePos.x() < (nodePos.x() - 5.5 * _radius)) || (_mousePos.x() > (nodePos.x() + 5.5 * _radius)))
             continue;
-        if((_mousePos.y() < (nodePos.y() - 3 * _radius)) || (_mousePos.y() > (nodePos.y() + 3 * _radius)))
+        if((_mousePos.y() < (nodePos.y() - 5.5 * _radius)) || (_mousePos.y() > (nodePos.y() + 5.5 * _radius)))
             continue;
         return false;
     }
@@ -247,14 +310,16 @@ bool EditZone::isNodePos()
     return false;
 }
 
-int EditZone::getNodeIndex()
+int EditZone::getNodeIndex(QPoint* position)
 {
     for(int index = 0; index < _graph.nodeCount(); index++)
     {
         QPoint nodePos = _graph.getPos(index);
+        if(position == nullptr)
+            position = &_mousePos;
 
-        if((_mousePos.x() >= nodePos.x() - _radius) && (_mousePos.x() <= nodePos.x() + _radius) &&
-           (_mousePos.y() >= nodePos.y() - _radius) && (_mousePos.y() <= nodePos.y() + _radius))
+        if((position->x() >= nodePos.x() - _radius) && (position->x() <= nodePos.x() + _radius) &&
+           (position->y() >= nodePos.y() - _radius) && (position->y() <= nodePos.y() + _radius))
         {
             return index;
         }

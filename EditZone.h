@@ -1,6 +1,7 @@
 #pragma once
 #include <QtWidgets>
 #include "Graph.h"
+#include "AddEdgeDialog.h"
 
 class EditZone : public QWidget
 {
@@ -23,12 +24,19 @@ private:
     int _selectedNode;
 
     Graph _graph;
+    AddEdgeDialog* _addEdgeDialog;
 
     Action getAction(QMouseEvent* event);
     QPoint getArrowPoint(QPoint inPoint, QPoint outPoint, QPoint centerPoint);
+    void transformEdgePoints(QPoint& inPoint, QPoint& outPoint);
     bool isCorrectPos();
     bool isNodePos();
-    int getNodeIndex();
+    int getNodeIndex(QPoint* position = nullptr);
+
+    void drawEdge(int nodeIn, int nodeOut);
+    void drawArrow(QPoint inPoint, QPoint outPoint, QPoint centerPoint, QPainter& painter);
+    void drawWeight(int nodeIn, int nodeOut);
+    void drawNode(int nodeNum);
 
 public:
     EditZone(QWidget *parent = nullptr);

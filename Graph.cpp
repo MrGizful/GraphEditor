@@ -60,6 +60,21 @@ void Graph::addEdge(int nodeOut, int nodeIn, float weight)
     node->adjacencyList.append(newEdge);
 }
 
+void Graph::removeEdge(int nodeOut, int nodeIn)
+{
+    QList<NodeInfo>::iterator node = _nodeList.begin();
+    for(int i = 0; i < nodeOut; i++)
+        node++;
+
+    QList<AdjacencyListElement> edgesList = node->adjacencyList;
+    for(int i = 0; i < edgesList.count(); i++)
+        if(edgesList.at(i).nodeNum == nodeIn)
+        {
+            node->adjacencyList.removeAt(i);
+            return;
+        }
+}
+
 QList<Graph::AdjacencyListElement> Graph::getEdges(int nodeNum)
 {
     return _nodeList.at(nodeNum).adjacencyList;
@@ -72,6 +87,15 @@ bool Graph::hasEdge(int nodeOut, int nodeIn)
         if(edgesList.at(i).nodeNum == nodeIn)
             return true;
     return false;
+}
+
+float Graph::getWeight(int nodeOut, int nodeIn)
+{
+    QList<AdjacencyListElement> edgesList = _nodeList.at(nodeOut).adjacencyList;
+    for(int i = 0; i < edgesList.count(); i++)
+        if(edgesList.at(i).nodeNum == nodeIn)
+            return edgesList.at(i).weight;
+    return qQNaN();
 }
 
 void Graph::setPos(QPoint pos, int nodeNum)

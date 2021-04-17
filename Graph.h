@@ -34,8 +34,11 @@ public:
     void removeNode(int nodeNum);
 
     void addEdge(int nodeOut, int nodeIn, float weight);
+    void removeEdge(int nodeOut, int nodeIn);
     QList<AdjacencyListElement> getEdges(int nodeNum);
     bool hasEdge(int nodeOut, int nodeIn);
+
+    float getWeight(int nodeOut, int nodeIn);
 
     void setPos(QPoint pos, int nodeNum);
     QPoint getPos(int nodeNum);
