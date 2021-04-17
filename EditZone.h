@@ -14,7 +14,8 @@ public:
         deleteNode,
         selectFirstNode,
         selectSecondNode,
-        deselectNode
+        deselectNode,
+        dragNode
     };
 
 private:
@@ -22,6 +23,7 @@ private:
     float _scale;
     int _radius;
     int _selectedNode;
+    bool _isDragged;
 
     Graph _graph;
     AddEdgeDialog* _addEdgeDialog;
@@ -30,6 +32,7 @@ private:
     QPoint getArrowPoint(QPoint inPoint, QPoint outPoint, QPoint centerPoint);
     void transformEdgePoints(QPoint& inPoint, QPoint& outPoint);
     bool isCorrectPos();
+    bool isCorrectDropPos(QPoint position);
     bool isNodePos();
     int getNodeIndex(QPoint* position = nullptr);
 
@@ -43,4 +46,9 @@ public:
 
     void paintEvent(QPaintEvent*);
     void mousePressEvent(QMouseEvent* event);
+    void mouseMoveEvent(QMouseEvent* event);
+
+    virtual void dragEnterEvent(QDragEnterEvent* event);
+    virtual void dragMoveEvent(QDragMoveEvent* event);
+    virtual void dropEvent(QDropEvent* event);
 };

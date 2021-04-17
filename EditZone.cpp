@@ -1,7 +1,7 @@
 #include "EditZone.h"
 
 EditZone::EditZone(QWidget *parent)
-    : QWidget(parent), _scale(1), _radius(20), _selectedNode(-1)
+    : QWidget(parent), _scale(1), _radius(20), _selectedNode(-1), _isDragged(false)
 {
     _mousePos.setX(0);
     _mousePos.setY(0);
@@ -10,6 +10,9 @@ EditZone::EditZone(QWidget *parent)
 EditZone::Action EditZone::getAction(QMouseEvent *event)
 {
     _mousePos = event->pos();
+
+    if(_isDragged)
+        return dragNode;
 
     if(event->button() == Qt::LeftButton)
     {
@@ -89,7 +92,61 @@ void EditZone::mousePressEvent(QMouseEvent *event)
         _selectedNode = -1;
         break;
     }
+    case dragNode:
+    {
+        break;
     }
+    }
+
+    update();
+}
+
+void EditZone::mouseMoveEvent(QMouseEvent *event)
+{
+    if((event->buttons() & Qt::LeftButton) && isNodePos())
+    {
+        int distance = (event->pos() - _mousePos).manhattanLength();
+        if(distance > QApplication::startDragDistance())
+        {
+            _isDragged = true;
+            _selectedNode = getNodeIndex();
+            _graph.setState(Graph::selected, _selectedNode);
+            update();
+
+            setAcceptDrops(true);
+            QMimeData* mimeData = new QMimeData;
+
+            QDrag* drag = new QDrag(this);
+            drag->setMimeData(mimeData);
+            drag->exec(Qt::MoveAction);
+        }
+    }
+}
+
+void EditZone::dragEnterEvent(QDragEnterEvent *event)
+{
+    event->acceptProposedAction();
+}
+
+void EditZone::dragMoveEvent(QDragMoveEvent *event)
+{
+    QPoint pos = event->position().toPoint();
+    if(isCorrectDropPos(pos))
+        _graph.setPos(pos, _selectedNode);
+    update();
+}
+
+void EditZone::dropEvent(QDropEvent *event)
+{
+    _isDragged = false;
+    _mousePos = event->position().toPoint();
+
+    if(isCorrectPos())
+        _graph.setPos(_mousePos, _selectedNode);
+
+    _graph.setState(Graph::stand, _selectedNode);
+    _selectedNode = -1;
+    setAcceptDrops(false);
 
     update();
 }
@@ -289,6 +346,23 @@ bool EditZone::isCorrectPos()
         if((_mousePos.x() < (nodePos.x() - 5.5 * _radius)) || (_mousePos.x() > (nodePos.x() + 5.5 * _radius)))
             continue;
         if((_mousePos.y() < (nodePos.y() - 5.5 * _radius)) || (_mousePos.y() > (nodePos.y() + 5.5 * _radius)))
+            continue;
+        return false;
+    }
+    return true;
+}
+
+bool EditZone::isCorrectDropPos(QPoint position)
+{
+    for(int i = 0; i < _graph.nodeCount(); i++)
+    {
+        QPoint nodePos = _graph.getPos(i);
+
+        if(i == _selectedNode)
+            continue;
+        if((position.x() < (nodePos.x() - 5.5 * _radius)) || (position.x() > (nodePos.x() + 5.5 * _radius)))
+            continue;
+        if((position.y() < (nodePos.y() - 5.5 * _radius)) || (position.y() > (nodePos.y() + 5.5 * _radius)))
             continue;
         return false;
     }
