@@ -1,9 +1,10 @@
 #include "AddEdgeDialog.h"
 
-AddEdgeDialog::AddEdgeDialog(QWidget* parent) : QDialog(parent), _delete(false)
+AddEdgeDialog::AddEdgeDialog(float weight, QWidget* parent) : QDialog(parent), _delete(false)
 {
     _weight = new QDoubleSpinBox;
     _weight->setRange(-10000, 10000);
+    _weight->setValue(weight);
     QLabel* label = new QLabel("Edge weight:");
     QPushButton* okBtn = new QPushButton("Ok");
     QPushButton* deleteBtn = new QPushButton("Delete");

@@ -14,7 +14,7 @@ private:
     bool _delete;
 
 public:
-    AddEdgeDialog(QWidget* parent = nullptr);
+    AddEdgeDialog(float weight = 0, QWidget* parent = nullptr);
 
     float getWeight();
     bool isEdgeDeleted();

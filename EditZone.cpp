@@ -75,7 +75,11 @@ void EditZone::mousePressEvent(QMouseEvent *event)
     }
     case selectSecondNode:
     {
-        _addEdgeDialog = new AddEdgeDialog();
+        int nodeIn = getNodeIndex();
+        float weight = _graph.getWeight(_selectedNode, nodeIn);
+        weight = qIsNaN(weight) ? 0 : weight;
+
+        _addEdgeDialog = new AddEdgeDialog(weight);
         if(_addEdgeDialog->exec() == QDialog::Accepted)
             _graph.addEdge(_selectedNode, getNodeIndex(), _addEdgeDialog->getWeight());
         if(_addEdgeDialog->isEdgeDeleted())
