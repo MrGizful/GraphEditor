@@ -11,13 +11,15 @@ CONFIG += c++11
 SOURCES += \
     AddEdgeDialog.cpp \
     Graph.cpp \
+    GraphEditor.cpp \
     main.cpp \
     EditZone.cpp
 
 HEADERS += \
     AddEdgeDialog.h \
     EditZone.h \
-    Graph.h
+    Graph.h \
+    GraphEditor.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

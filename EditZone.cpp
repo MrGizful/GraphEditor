@@ -60,11 +60,13 @@ void EditZone::mousePressEvent(QMouseEvent *event)
     case createNewNode:
     {
         _graph.addNode(_mousePos);
+        setMinimumSize(getNewWidgetSize());
         break;
     }
     case deleteNode:
     {
         _graph.removeNode(getNodeIndex());
+        setMinimumSize(getNewWidgetSize());
         break;
     }
     case selectFirstNode:
@@ -151,6 +153,7 @@ void EditZone::dropEvent(QDropEvent *event)
     _graph.setState(Graph::stand, _selectedNode);
     _selectedNode = -1;
     setAcceptDrops(false);
+    setMinimumSize(getNewWidgetSize());
 
     update();
 }
@@ -403,4 +406,21 @@ int EditZone::getNodeIndex(QPoint* position)
         }
     }
     return -1;
+}
+
+QSize EditZone::getNewWidgetSize()
+{
+    int maxX = 0;
+    int maxY = 0;
+
+    for(int nodeIndex = 0; nodeIndex < _graph.nodeCount(); nodeIndex++)
+    {
+        QPoint pos = _graph.getPos(nodeIndex);
+        if(maxX < pos.x())
+            maxX = pos.x();
+        if(maxY < pos.y())
+            maxY = pos.y();
+    }
+
+    return QSize(maxX + _radius, maxY + _radius);
 }

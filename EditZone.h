@@ -36,6 +36,8 @@ private:
     bool isNodePos();
     int getNodeIndex(QPoint* position = nullptr);
 
+    QSize getNewWidgetSize();
+
     void drawEdge(int nodeIn, int nodeOut);
     void drawArrow(QPoint inPoint, QPoint outPoint, QPoint centerPoint, QPainter& painter);
     void drawWeight(int nodeIn, int nodeOut);

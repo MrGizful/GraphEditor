@@ -1,12 +1,12 @@
 #include <QApplication>
 #include <QScrollArea>
-#include "EditZone.h"
+#include "GraphEditor.h"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    EditZone wgt;
+    GraphEditor wgt;
     wgt.show();
 
     return a.exec();
